@@ -43,8 +43,90 @@ jobs:
           poetry run black --check .
           poetry run isort --check-only .
 
-  docker-build:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Poetry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Upgrade pip
+        run: python -m pip install -U pip
+
+      - name: Install Poetry
+        run: pip install "poetry==2.1.4"
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --with dev
+
+      - name: Run tests
+        run: poetry run pytest -q
+
+  integration:
     needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start services
+        run: docker compose up -d --build
+
+      - name: Wait for API (health)
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8003/health > /dev/null; then
+              echo "API is up"
+              exit 0
+            fi
+            echo "Waiting for API..."
+            sleep 2
+          done
+          echo "API did not become ready in time"
+          docker compose ps
+          docker compose logs
+          exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install -U pip
+
+      - name: Install Poetry
+        run: pip install "poetry==2.1.4"
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --with dev
+
+      - name: Run integration tests
+        env:
+          BASE_URL: http://localhost:8003
+        run: poetry run python -m pytest -q tests_integration
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
+
+
+  docker-build:
+    needs: [lint, tests, integration]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
