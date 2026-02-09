@@ -74,7 +74,7 @@ jobs:
         run: poetry install --no-root --no-interaction --with dev
 
       - name: Run tests
-        run: poetry run pytest -q
+        run: poetry run python -m pytest -q
 
   integration:
     needs: lint
@@ -126,7 +126,7 @@ jobs:
 
 
   docker-build:
-    needs: [lint, tests, integration]
+    needs: [lint, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
