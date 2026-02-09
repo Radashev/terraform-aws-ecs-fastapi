@@ -73,6 +73,11 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-root --no-interaction --with dev
 
+      - name: Debug (show pytest)
+        run: |
+            poetry run python -c "import sys; print(sys.executable)"
+            poetry run python -c "import pytest; print(pytest.__version__)"
+
       - name: Run tests
         run: poetry run python -m pytest -q
 
