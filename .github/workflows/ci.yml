@@ -137,7 +137,6 @@ jobs:
         if: always()
         run: docker compose down
 
-
   docker-build:
     needs: [lint, tests]
     runs-on: ubuntu-latest
