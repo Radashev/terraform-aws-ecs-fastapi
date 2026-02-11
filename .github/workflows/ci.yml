@@ -44,7 +44,7 @@ jobs:
           poetry run isort --check-only .
 
   tests:
-    needs: lint
+    needs: [lint, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,24 +92,18 @@ jobs:
       - name: Start services
         run: docker compose up -d --build
 
-      - name: Wait for API
+      - name: Wait for API (docker health)
         run: |
-          set -e
-          echo "docker compose ps:"
-          docker compose ps
-
           for i in {1..30}; do
-            if curl -fsS http://localhost:8003/health > /dev/null; then
-              echo "API is up"
+            status=$(docker inspect --format='{{.State.Health.Status}}' terraform-aws-ecs-fastapi-api-1 2>/dev/null || true)
+            echo "Health status: $status"
+            if [ "$status" = "healthy" ]; then
+              echo "API container is healthy"
               exit 0
             fi
-            echo "Waiting for API... attempt $i/30"
-            docker compose ps
-            docker compose logs --tail 80 api || true
             sleep 2
           done
-
-          echo "API did not become ready in time"
+          echo "API did not become healthy in time"
           docker compose ps
           docker compose logs --tail 200 api || true
           exit 1
@@ -138,7 +132,7 @@ jobs:
         run: docker compose down
 
   docker-build:
-    needs: [lint, tests]
+    needs: [lint, tests, integration]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
