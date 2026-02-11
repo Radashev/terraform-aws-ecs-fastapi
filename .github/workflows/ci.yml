@@ -44,7 +44,7 @@ jobs:
           poetry run isort --check-only .
 
   tests:
-    needs: [lint, tests]
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
