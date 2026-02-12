@@ -36,7 +36,7 @@ jobs:
         run: poetry check
 
       - name: Install dependencies
-        run: poetry install --no-root --no-interaction --with dev
+        run: poetry install --no-root --no-interaction --with dev --sync
 
       - name: Lint
         run: |
@@ -55,15 +55,15 @@ jobs:
         with:
           python-version: "3.11"
 
-#      - name: Cache Poetry
-#        uses: actions/cache@v4
-#        with:
-#          path: |
-#            ~/.cache/pypoetry
-#            ~/.cache/pip
-#          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-#          restore-keys: |
-#            ${{ runner.os }}-poetry-
+      - name: Cache Poetry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
 
       - name: Upgrade pip
         run: python -m pip install -U pip
@@ -74,6 +74,11 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-root --no-interaction --with dev
 
+      - name: Debug deps
+        run: |
+            poetry run python -c "import pytest; print('pytest OK', pytest.__version__)"
+            poetry show pytest
+
       - name: Debug (show pytest)
         run: |
             poetry run python -c "import sys; print(sys.executable)"
@@ -83,7 +88,7 @@ jobs:
         run: poetry run python -m pytest -q
 
   integration:
-    needs: lint
+    needs: [lint, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -120,7 +125,12 @@ jobs:
         run: pip install "poetry==2.1.4"
 
       - name: Install dependencies
-        run: poetry install --no-root --no-interaction --with dev
+        run: poetry install --no-root --no-interaction --with dev --sync
+
+      - name: Debug deps
+        run: |
+            poetry run python -c "import pytest; print('pytest OK', pytest.__version__)"
+            poetry show pytest
 
       - name: Run integration tests
         env:
