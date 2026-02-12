@@ -9,7 +9,8 @@ readme = "README.md"
 requires-python = ">=3.11,<4.0"
 dependencies = [
     "fastapi (>=0.128.4,<0.129.0)",
-    "uvicorn (>=0.40.0,<0.41.0)"
+    "uvicorn (>=0.40.0,<0.41.0)",
+    "pytest (>=9.0.2,<10.0.0)"
 ]
 
 [tool.poetry]
@@ -22,4 +23,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.group.dev.dependencies]
 black = "^26.1.0"
 isort = "^7.0.0"
+pytest = "^9.0.2"
+httpx = "^0.28.1"
+requests = "^2.32.5"
 
