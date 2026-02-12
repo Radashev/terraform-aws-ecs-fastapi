@@ -2,8 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY app/ /app/
+RUN pip install --no-cache-dir poetry
 
-RUN pip install --no-cache-dir fastapi uvicorn
+# Copy dependency files first for caching
+COPY pyproject.toml poetry.lock* /app/
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
+# Install dependencies only (no project install)
+RUN poetry install --no-root --no-interaction
+
+# Copy app code
+COPY app/ /app/app
+
+EXPOSE 8000
+
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
